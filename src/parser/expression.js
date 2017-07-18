@@ -784,43 +784,62 @@ export default class ExpressionParser extends LValParser {
 
   parseMatch(): N.MatchExpression {
     if (!this.hasPlugin("patternMatching")) {
-      this.raise(this.state.start, "You can only use pattern-matching when the 'patternMatching' plugin is enabled.");
+      this.raise(
+        this.state.start,
+        "You can only use pattern-matching when the 'patternMatching' plugin is enabled.",
+      );
     }
     const node = this.startNode();
     this.next();
 
     node.discriminant = this.parseParenExpression();
-    console.log("discriminant: ", node.discriminant.name);
     node.patterns = [];
 
     this.expect(tt.braceL);
-    console.log("Parsing till '}' found");
 
     let hasNext = true;
     while (hasNext) {
       const patternNode = this.startNode();
 
-      // @todo rewrite it to match
+      // @todo rewrite it to match expr ;)
       let pattern;
       switch (this.state.type) {
         case tt._else:
           pattern = this.parseElseMatchClause();
           break;
+
+        case tt.num:
+          pattern = this.parseLiteral(this.state.value, "NumericLiteral");
+          break;
+
+        case tt.bigint:
+          pattern = this.parseLiteral(this.state.value, "BigIntLiteral");
+          break;
+
+        case tt.string:
+          pattern = this.parseLiteral(this.state.value, "StringLiteral");
+          break;
+
+        case tt._null:
+          pattern = this.startNode();
+          this.next();
+          this.finishNode(node, "NullLiteral");
+          break;
+
+        case tt._true:
+        case tt._false:
+          pattern = this.parseBooleanLiteral();
+          break;
+
         default:
           pattern = this.parseBindingAtom();
           break;
       }
-      console.log("Pattern parsed!");
-      console.log(pattern);
-
       this.expect(tt.colon);
-      console.log("':' parsed");
 
       const body = this.match(tt.braceL)
         ? this.parseBlock(true)
         : this.parseMaybeAssign();
-      console.log("Parsed body");
-      console.log(body);
 
       this.finishNode(patternNode, "PatternNode");
       patternNode.pattern = pattern;
@@ -833,11 +852,7 @@ export default class ExpressionParser extends LValParser {
 
     this.expect(tt.braceR);
 
-    console.log("DONE");
-
     this.finishNode(node, "MatchExpression");
-
-    console.log("FULL NODE: ", JSON.stringify(node));
 
     return node;
   }
@@ -924,6 +939,7 @@ export default class ExpressionParser extends LValParser {
     this.addExtra(node, "rawValue", value);
     this.addExtra(node, "raw", this.input.slice(startPos, this.state.end));
     node.value = value;
+
     this.next();
     return this.finishNode(node, type);
   }
