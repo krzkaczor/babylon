@@ -484,7 +484,27 @@ export default class ExpressionParser extends LValParser {
         tt.parenR,
         possibleAsync,
       );
-      this.finishCallExpression(node);
+
+      if (base.name === "match" && this.match(tt.braceL)) {
+        if (!this.hasPlugin("patternMatching")) {
+          this.raise(
+            startPos,
+            "You can only use pattern-matching when the 'patternMatching' plugin is enabled.",
+          );
+        }
+
+        if (node.arguments.length !== 1) {
+          // @todo we are probably allowing trailing comma here which is wrong
+          this.raise(
+            this.state.start,
+            "You need to match exactly one expression!",
+          );
+        }
+
+        return this.parseMatch(node.arguments[0], node);
+      } else {
+        this.finishCallExpression(node);
+      }
 
       if (possibleAsync && this.shouldParseAsyncArrow()) {
         state.stop = true;
@@ -774,25 +794,18 @@ export default class ExpressionParser extends LValParser {
           );
         }
 
-      case tt._match:
-        return this.parseMatch();
-
       default:
         throw this.unexpected();
     }
   }
 
-  parseMatch(): N.MatchExpression {
-    if (!this.hasPlugin("patternMatching")) {
-      this.raise(
-        this.state.start,
-        "You can only use pattern-matching when the 'patternMatching' plugin is enabled.",
-      );
-    }
-    const node = this.startNode();
-    this.next();
+  parseMatch(
+    discriminant: N.Expression,
+    previousNode: N.Node,
+  ): N.MatchExpression {
+    const node = this.startNodeAtNode(previousNode);
 
-    node.discriminant = this.parseParenExpression();
+    node.discriminant = discriminant;
     node.patterns = [];
 
     this.expect(tt.braceL);
