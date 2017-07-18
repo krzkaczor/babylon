@@ -1,0 +1,3 @@
+match (obj) {
+  { x }: true
+}

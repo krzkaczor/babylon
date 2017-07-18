@@ -232,6 +232,22 @@ export type SwitchStatement = NodeBase & {
   cases: $ReadOnlyArray<SwitchCase>,
 };
 
+export type MatchExpression = NodeBase & {
+  type: "MatchExpression",
+  discriminant: Expression,
+  patterns: $ReadOnlyArray<MatchExpressionClause>,
+};
+
+export type MatchExpressionClause = NodeBase & {
+  type: "MatchExpressionClause",
+  pattern: PatternBase | ElseMatchExpressionClause,
+  body: BlockStatement | Expression,
+};
+
+export type ElseMatchExpressionClause = NodeBase & {
+  type: "ElseMatchClause",
+};
+
 export type SwitchCase = NodeBase & {
   type: "SwitchCase",
   test: ?Expression,

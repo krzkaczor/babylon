@@ -774,9 +774,78 @@ export default class ExpressionParser extends LValParser {
           );
         }
 
+      case tt._match:
+        return this.parseMatch();
+
       default:
         throw this.unexpected();
     }
+  }
+
+  parseMatch(): N.MatchExpression {
+    if (!this.hasPlugin("patternMatching")) {
+      this.raise(this.state.start, "You can only use pattern-matching when the 'patternMatching' plugin is enabled.");
+    }
+    const node = this.startNode();
+    this.next();
+
+    node.discriminant = this.parseParenExpression();
+    console.log("discriminant: ", node.discriminant.name);
+    node.patterns = [];
+
+    this.expect(tt.braceL);
+    console.log("Parsing till '}' found");
+
+    let hasNext = true;
+    while (hasNext) {
+      const patternNode = this.startNode();
+
+      // @todo rewrite it to match
+      let pattern;
+      switch (this.state.type) {
+        case tt._else:
+          pattern = this.parseElseMatchClause();
+          break;
+        default:
+          pattern = this.parseBindingAtom();
+          break;
+      }
+      console.log("Pattern parsed!");
+      console.log(pattern);
+
+      this.expect(tt.colon);
+      console.log("':' parsed");
+
+      const body = this.match(tt.braceL)
+        ? this.parseBlock(true)
+        : this.parseMaybeAssign();
+      console.log("Parsed body");
+      console.log(body);
+
+      this.finishNode(patternNode, "PatternNode");
+      patternNode.pattern = pattern;
+      patternNode.body = body;
+
+      node.patterns.push(patternNode);
+
+      hasNext = this.eat(tt.comma);
+    }
+
+    this.expect(tt.braceR);
+
+    console.log("DONE");
+
+    this.finishNode(node, "MatchExpression");
+
+    console.log("FULL NODE: ", JSON.stringify(node));
+
+    return node;
+  }
+
+  parseElseMatchClause(): N.ElseMatchExpressionClause {
+    const node = this.startNode();
+    this.next();
+    return this.finishNode(node, "ElseMatchExpressionClause");
   }
 
   parseBooleanLiteral(): N.BooleanLiteral {

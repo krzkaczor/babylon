@@ -1,0 +1,4 @@
+{
+  "plugins": ["patternMatching"],
+  "allowReturnOutsideFunction": true
+}
