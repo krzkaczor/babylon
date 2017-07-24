@@ -78,6 +78,7 @@ These are the core Babylon AST node types.
   - [NewExpression](#newexpression)
   - [SequenceExpression](#sequenceexpression)
   - [DoExpression](#doexpression)
+  - [MatchExpression](#matchexpression)
 - [Template Literals](#template-literals)
   - [TemplateLiteral](#templateliteral)
   - [TaggedTemplateExpression](#taggedtemplateexpression)
@@ -930,10 +931,85 @@ A sequence expression, i.e., a comma-separated sequence of expressions.
 ```js
 interface DoExpression <: Expression {
   type: "DoExpression";
-  body: BlockStatement
+  body: BlockStatement;
 }
 ```
 
+## MatchExpression
+
+```js
+interface MatchExpression <: Expression {
+  type: "MatchExpression";
+  discriminant: Expression;
+  patterns: [ MatchExpressionClause ];
+}
+```
+
+### MatchExpressionClause
+
+```js
+interface MatchExpressionClause {
+  type: "MatchExpressionClause";
+  pattern: MatchExpressionPattern;
+  body: BlockStatement | Expression;
+}
+```
+
+### MatchExpressionPatterns
+
+```js
+interface MatchExpressionPattern <: Node { }
+```
+
+#### ObjectMatchExpressionPattern
+
+```js
+interface AssignmentPropertyMatchExpressionPattern <: ObjectProperty {
+  value: MatchExpressionPattern;
+}
+
+interface ObjectPattern <: MatchExpressionPattern {
+  type: "ObjectMatchExpressionPattern";
+  properties: [ AssignmentPropertyMatchExpressionPattern | RestElementMatchExpressionPattern ];
+}
+```
+
+#### ArrayPattern
+
+```js
+interface ArrayMatchExpressionPattern <: MatchExpressionPattern {
+  type: "ArrayPattern";
+  elements: [ MatchExpressionPattern | null  | RestElementMatchExpressionPattern ];
+}
+```
+
+#### RestElement
+
+```js
+interface RestElementMatchExpressionPattern <: MatchExpressionPattern {
+  type: "RestElement";
+  argument: MatchExpressionPattern;
+}
+```
+
+#### AssignmentPattern
+
+```js
+interface AssignmentPattern <: MatchExpressionPattern {
+  type: "AssignmentPattern";
+  left: MatchExpressionPattern;
+  right: Expression;
+}
+```
+
+#### ElseMatchExpressionClause
+
+```js
+interface ElseMatchExpressionClause <: MatchExpressionPattern {
+  type: "ElseMatchExpressionClause";
+}
+```
+ 
 # Template Literals
 
 ## TemplateLiteral

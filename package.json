@@ -59,7 +59,7 @@
     "prepublish": "cross-env BABEL_ENV=production yarn run build",
     "preversion": "yarn run test && npm run changelog",
     "test": "yarn run lint && yarn run flow && yarn run build -- -m && yarn run test-only",
-    "test-only": "ava",
+    "test-only": "ava --verbose",
     "test-coverage": "cross-env BABEL_ENV=test yarn run build && nyc --reporter=json --reporter=text yarn run test-only",
     "watch": "yarn run clean && rollup -c --watch"
   },
